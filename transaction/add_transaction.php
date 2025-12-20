@@ -31,6 +31,7 @@ if($_SERVER['REQUEST_METHOD']=="POST"){
             }
     }
         else {
+            $card_id = $_POST["card_id"];
             $montant_category = 0.00;
             switch($category){
                 case "Nourriture":
@@ -44,11 +45,11 @@ if($_SERVER['REQUEST_METHOD']=="POST"){
                     break;
             }
 
-            $sum_amount_month = "SELECT sum(amount) as Summ from transaction where type = 'depense' and description = '$category' and card_id = '$card_id' ";
+            $sum_amount_month = "SELECT sum(amount) as Sum from transaction where type = 'depense' and description = '$category' and MONTH(created_at) = MONTH(CURRENT_DATE()) and YEAR(created_at) = YEAR(CURRENT_DATE()) and card_id = '$card_id' ";
             $sum_result = mysqli_query($connect, $sum_amount_month); 
             $sum_row = mysqli_fetch_assoc($sum_result);
             $sum = $sum_row['Sum'];
-            if($sum > $montant_category){
+            if(($sum + $amount) > $montant_category){
                 echo "<script>
                         alert('Transaction amount exceeds the limit for the selected category.');
                         window.location.href = '../dashboard.php';
