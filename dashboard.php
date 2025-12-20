@@ -560,6 +560,116 @@ if (!isset($_SESSION['user_id'])) {
             font-size: 14px;
         }
         
+        /* Transaction History Table Styles */
+        .transaction-history-section {
+            background-color: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+            margin-top: 30px;
+            grid-column: 1 / -1;
+        }
+        
+        .transaction-history-section h2 {
+            color: #1a237e;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e8eaf6;
+            font-size: 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid #e8eaf6;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .transaction-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        
+        .transaction-table thead {
+            background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+            border-bottom: 2px solid #3949ab;
+        }
+        
+        .transaction-table th {
+            padding: 16px 15px;
+            text-align: left;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .transaction-table th:last-child {
+            border-right: none;
+        }
+        
+        .transaction-table tbody tr {
+            border-bottom: 1px solid #e8eaf6;
+            transition: background-color 0.3s ease;
+        }
+        
+        .transaction-table tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .transaction-table tbody tr:hover {
+            background-color: #e8eaf6;
+        }
+        
+        .transaction-table td {
+            padding: 14px 15px;
+            color: #333;
+            font-size: 14px;
+            border-right: 1px solid #e8eaf6;
+        }
+        
+        .transaction-table td:last-child {
+            border-right: none;
+        }
+        
+        .transaction-type {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .transaction-type.revenue {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .transaction-type.depense {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .amount-cell {
+            font-weight: 600;
+            color: #1a237e;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px !important;
+            color: #666;
+            font-style: italic;
+            background-color: #f8f9fa !important;
+        }
+        
         @media (max-width: 767px) {
             .header-content {
                 flex-direction: column;
@@ -582,6 +692,20 @@ if (!isset($_SESSION['user_id'])) {
             .modal-content {
                 padding: 20px;
                 width: 95%;
+            }
+            
+            .transaction-table th,
+            .transaction-table td {
+                padding: 12px 10px;
+                font-size: 13px;
+            }
+            
+            .transaction-history-section {
+                padding: 20px;
+            }
+            
+            .transaction-history-section h2 {
+                font-size: 20px;
             }
         }
     </style>
@@ -675,6 +799,58 @@ if (!isset($_SESSION['user_id'])) {
                 <button class="add-recurring-btn" onclick="openModal('addRecurringModal')">
                     <i class="fas fa-plus"></i> Ajouter une dépense récurrente
                 </button>
+            </section>
+            
+            <!-- Transaction History Section -->
+            <section class="transaction-history-section">
+                <h2>Historique des Transactions <i class="fas fa-history"></i></h2>
+                
+                <div class="table-container">
+                    <table class="transaction-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Montant (DH)</th>
+                                <th>Carte</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            // You need to include your database connection
+                            // $connect = mysqli_connect(...);
+                            
+                            $user_id = $_SESSION['user_id'];
+                            
+                            $transaction_query = "SELECT t.created_at, t.type, t.amount, c.bank_name, t.description 
+                                                 FROM transaction t 
+                                                 JOIN cards c ON t.card_id = c.id 
+                                                 WHERE c.user_id = $user_id 
+                                                 ORDER BY t.created_at DESC";
+                            $result = mysqli_query($connect, $transaction_query);
+                            
+                            if(mysqli_num_rows($result) > 0) {
+                                while($row = mysqli_fetch_assoc($result)) {
+                                    $type_class = ($row['type'] == 'revenue') ? 'revenue' : 'depense';
+                                    $formatted_date = date('d/m/Y H:i', strtotime($row['created_at']));
+                                    $description = $row['description'] ?: '-';
+                                    
+                                    echo "<tr>";
+                                    echo "<td>$formatted_date</td>";
+                                    echo "<td><span class='transaction-type $type_class'>" . ucfirst($row['type']) . "</span></td>";
+                                    echo "<td class='amount-cell'>" . number_format($row['amount'], 2) . " DH</td>";
+                                    echo "<td>" . $row['bank_name'] . "</td>";
+                                    echo "<td>" . htmlspecialchars($description) . "</td>";
+                                    echo "</tr>";
+                                }
+                            } else {
+                                echo "<tr><td colspan='5' class='no-data'>Aucune transaction trouvée</td></tr>";
+                            }
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
             </section>
         </div>
     </main>
@@ -777,10 +953,7 @@ if (!isset($_SESSION['user_id'])) {
                         <option value="">Sélectionnez la catégorie</option>
                         <option value="Nourriture">Nourriture</option>
                         <option value="Transport">Transport</option>
-                        <option value="Shopping">Shopping</option>
                         <option value="Santé">Santé</option>
-                        <option value="Divertissement">Divertissement</option>
-                        <option value="Autre">Autre</option>
                     </select>
                 </div>
                 
