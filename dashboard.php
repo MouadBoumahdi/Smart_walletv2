@@ -818,35 +818,46 @@ if (!isset($_SESSION['user_id'])) {
                         </thead>
                         <tbody>
                             <?php 
-                            // You need to include your database connection
-                            // $connect = mysqli_connect(...);
-                            
-                            $user_id = $_SESSION['user_id'];
-                            
-                            $transaction_query = "SELECT t.created_at, t.type, t.amount, c.bank_name, t.description 
-                                                 FROM transaction t 
-                                                 JOIN cards c ON t.card_id = c.id 
-                                                 WHERE c.user_id = $user_id 
-                                                 ORDER BY t.created_at DESC";
-                            $result = mysqli_query($connect, $transaction_query);
-                            
-                            if(mysqli_num_rows($result) > 0) {
-                                while($row = mysqli_fetch_assoc($result)) {
-                                    $type_class = ($row['type'] == 'revenue') ? 'revenue' : 'depense';
-                                    $formatted_date = date('d/m/Y H:i', strtotime($row['created_at']));
-                                    $description = $row['description'] ?: '-';
-                                    
-                                    echo "<tr>";
-                                    echo "<td>$formatted_date</td>";
-                                    echo "<td><span class='transaction-type $type_class'>" . ucfirst($row['type']) . "</span></td>";
-                                    echo "<td class='amount-cell'>" . number_format($row['amount'], 2) . " DH</td>";
-                                    echo "<td>" . $row['bank_name'] . "</td>";
-                                    echo "<td>" . htmlspecialchars($description) . "</td>";
-                                    echo "</tr>";
+                                
+                                $transaction_query = "SELECT t.created_at, t.type, t.amount, c.bank_name, t.description 
+                                                     FROM transaction t 
+                                                     JOIN cards c ON t.card_id = c.id 
+                                                     WHERE c.user_id = $user_id 
+                                                     ORDER BY t.created_at DESC";
+
+                                $sendmoney_query = "SELECT s.created_at, s.type,s.person_id , s.amount, c.bank_name 
+                                                    FROM sendmoney s
+                                                    JOIN cards c ON s.card_id = c.id
+                                                    WHERE c.user_id = $user_id
+                                                    ORDER BY s.created_at DESC";
+
+                                $result_transaction = mysqli_query($connect, $transaction_query);
+                                $result_sendmoney = mysqli_query($connect, $sendmoney_query);
+                                
+                                $transaction = [];
+                                
+                                if(mysqli_num_rows($result_transaction) > 0) {
+                                    while($row = mysqli_fetch_assoc($result_transaction)) {
+                                        $transaction[] = $row;
+                                    }
                                 }
-                            } else {
-                                echo "<tr><td colspan='5' class='no-data'>Aucune transaction trouvée</td></tr>";
-                            }
+
+                                if(mysqli_num_rows($result_sendmoney) > 0) {
+                                    while($row = mysqli_fetch_assoc($result_sendmoney)) {
+                                        $transaction[] = $row;
+                                    }
+                                }
+
+                                    foreach($transaction as $row) {
+                                        echo "<tr>";
+                                        echo "<td>" . date('d/m/Y H:i', strtotime($row['created_at'])) . "</td>";
+                                        echo "<td><span class='transaction-type'>" . ucfirst($row['type']) . "</span></td>";
+                                        echo "<td class='amount-cell'>" . $row['amount'] . " DH</td>";
+                                        echo "<td>" . $row['bank_name'] . "</td>";
+                                        echo "<td>" . ($row['description'] ?? 'To person number ' . $row['person_id']) . "</td>";
+                                        echo "</tr>";
+                                    }
+                                
                             ?>
                         </tbody>
                     </table>

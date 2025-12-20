@@ -43,7 +43,12 @@ if($_SERVER['REQUEST_METHOD']=="POST"){
                     $montant_category = 2500.00;
                     break;
             }
-            if($amount > $montant_category){
+
+            $sum_amount_month = "SELECT sum(amount) as Summ from transaction where type = 'depense' and description = '$category' and card_id = '$card_id' ";
+            $sum_result = mysqli_query($connect, $sum_amount_month); 
+            $sum_row = mysqli_fetch_assoc($sum_result);
+            $sum = $sum_row['Sum'];
+            if($sum > $montant_category){
                 echo "<script>
                         alert('Transaction amount exceeds the limit for the selected category.');
                         window.location.href = '../dashboard.php';
