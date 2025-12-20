@@ -31,9 +31,28 @@ if($_SERVER['REQUEST_METHOD']=="POST"){
             }
     }
         else {
-        $card_id = $_POST["card_id"];
-        $updatecard = 'UPDATE cards SET balance = balance - '.$amount.' WHERE id = '.$card_id;
-            mysqli_query($connect, $updatecard);
+            $montant_category = 0.00;
+            switch($category){
+                case "Nourriture":
+                    $montant_category = 1500.00;
+                    break;
+                case "Transport":
+                    $montant_category = 800.00;
+                    break;
+                case "sante":
+                    $montant_category = 2500.00;
+                    break;
+            }
+            if($amount > $montant_category){
+                echo "<script>
+                        alert('Transaction amount exceeds the limit for the selected category.');
+                        window.location.href = '../dashboard.php';
+                    </script>";
+                exit();
+            }else{
+                $card_id = $_POST["card_id"];
+                $updatecard = 'UPDATE cards SET balance = balance - '.$amount.' WHERE id = '.$card_id;
+                mysqli_query($connect, $updatecard);
 
             $insert_transaction_sql = "INSERT INTO transaction(card_id, amount, type, description) VALUES ( '$card_id', '$amount', '$transaction_type' , '$category') ";
 
@@ -43,6 +62,8 @@ if($_SERVER['REQUEST_METHOD']=="POST"){
             } else {
                 echo "Error inserting transaction: " . mysqli_error($connect);
             }
+            }
+        
     }
 
 
