@@ -28,7 +28,10 @@
                 $row = mysqli_fetch_assoc($result);
                 
                 if($montant > $row['balance']){
-                    echo "Error: Insufficient funds.";
+                    echo "<script>
+                            alert('Insufficient balance to complete the transaction.');
+                            window.location.href = '../dashboard.php';
+                        </script>";
                     exit();
                 }else{
                         $addsql = "INSERT INTO sendmoney(amount,person_id,card_id) values('$montant','$person_id','$card_id')";
