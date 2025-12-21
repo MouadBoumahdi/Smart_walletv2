@@ -12,6 +12,14 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: auth/login.php");
     exit;
 }
+
+
+
+// depense recurrente
+$depense_recurrente_query = "SELECT * from transaction where user_id = " . $_SESSION['user_id'] . " and type='depense' and MONTH(created_at) = MONTH(CURRENT_DATE()) and YEAR(created_at) = YEAR(CURRENT_DATE()) GROUP BY description having count(*) > 1";
+$depense_recurrente_result = mysqli_query($connect, $depense_recurrente_query);
+
+
 ?>
 
 <!DOCTYPE html>
@@ -794,11 +802,25 @@ if (!isset($_SESSION['user_id'])) {
                 <h2>Dépenses récurrentes <i class="fas fa-redo-alt"></i></h2>
                 
                 <div class="recurring-list" id="recurringList">
+                        <?php
+                            while($row = mysqli_fetch_assoc($depense_recurrente_result)){
+                                echo '
+                                    <div class="recurring-item">
+                                        <div class="recurring-info">
+                                            <h4>'.$row['description'].'</h4>
+                                            <div class="recurring-details">
+                                                <span>Catégorie: '.$row['description'].'</span>
+                                            </div>
+                                        </div>
+                                        <div class="recurring-amount">
+                                            '.$row['amount'].' DH
+                                        </div>
+                                    </div>
+                                ';
+                            }
+                        ?>
                 </div>
-                
-                <button class="add-recurring-btn" onclick="openModal('addRecurringModal')">
-                    <i class="fas fa-plus"></i> Ajouter une dépense récurrente
-                </button>
+            
             </section>
             
             <!-- Transaction History Section -->
@@ -854,7 +876,7 @@ if (!isset($_SESSION['user_id'])) {
                                         echo "<td><span class='transaction-type'>" . ucfirst($row['type']) . "</span></td>";
                                         echo "<td class='amount-cell'>" . $row['amount'] . " DH</td>";
                                         echo "<td>" . $row['bank_name'] . "</td>";
-                                        echo "<td>" . ($row['description'] ?? 'To person number ' . $row['person_id']) . "</td>";
+                                        echo "<td>" . ($row['description'] ?? 'Send to person number ' . $row['person_id']) . "</td>";
                                         echo "</tr>";
                                     }
                                 
@@ -1033,51 +1055,7 @@ if (!isset($_SESSION['user_id'])) {
         </div>
     </div>
     
-    <div class="modal" id="addRecurringModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fas fa-redo-alt"></i> Ajouter une dépense récurrente</h3>
-                <button class="close-modal" onclick="closeModal('addRecurringModal')">&times;</button>
-            </div>
-            <form class="modal-form" id="addRecurringForm" action="expenses/add_recurring.php" method="POST">
-                <div class="form-group">
-                    <label for="recurringName">Nom de la dépense</label>
-                    <input type="text" id="recurringName" name="name" placeholder="Ex: Abonnement Internet INWI" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="recurringAmount">Montant (DH)</label>
-                    <input type="number" id="recurringAmount" name="amount" placeholder="50" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="recurringDay">Jour de prélèvement</label>
-                    <select id="recurringDay" name="day" required>
-                        <option value="">Sélectionnez le jour</option>
-                        <option value="1">1er du mois</option>
-                        <option value="5">5 du mois</option>
-                        <option value="10">10 du mois</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="recurringCard">Carte source</label>
-                    <select id="recurringCard" name="card_id" required>
-                        <option value="">Sélectionnez la carte</option>
-                        <?php
-                            foreach($cards as $row){
-                                echo '<option value="'.$row['id'].'">'.$row['bank_name'].' - ****'.substr($row['card_number'],-4).'</option>';
-                            }
-                        ?>
-                    </select>
-                </div>
-                
-                <button type="submit" class="modal-submit-btn">
-                    <i class="fas fa-save"></i> Enregistrer la dépense récurrente
-                </button>
-            </form>
-        </div>
-    </div>
+    
 
     <script>
         function openModal(modalId) {

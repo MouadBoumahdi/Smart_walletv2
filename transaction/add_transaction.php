@@ -60,7 +60,7 @@ if($_SERVER['REQUEST_METHOD']=="POST"){
                 $updatecard = 'UPDATE cards SET balance = balance - '.$amount.' WHERE id = '.$card_id;
                 mysqli_query($connect, $updatecard);
 
-            $insert_transaction_sql = "INSERT INTO transaction(card_id, amount, type, description) VALUES ( '$card_id', '$amount', '$transaction_type' , '$category') ";
+            $insert_transaction_sql = "INSERT INTO transaction(user_id,card_id, amount, type, description) VALUES ( '$user_id', '$card_id', '$amount', '$transaction_type' , '$category') ";
 
             if(mysqli_query($connect, $insert_transaction_sql)){
                 header("Location: ../dashboard.php");
